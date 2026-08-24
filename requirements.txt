@@ -1,0 +1,3 @@
+# VeeBridge relies strictly on Python's Standard Library natively.
+# No external dependencies (like requests, rich, or textual) are required!
+# Just clone, and execute `python main.py -h`

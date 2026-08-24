@@ -2,7 +2,11 @@ import argparse
 import asyncio
 import sys
 import os
-import msvcrt
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import select
+
 from config_extractor import extract_veepn_config
 from proxy_server import VeeBridgeProxy, ProxyStats
 
@@ -34,17 +38,33 @@ def log_callback(msg: str):
     else:
         print(msg)
 
+def check_keypress() -> bool:
+    if sys.platform == "win32":
+        if msvcrt.kbhit():
+            key = msvcrt.getch()
+            return key in (b'\r', b'\n', b' ')
+        return False
+    else:
+        if not sys.stdin.isatty():
+            return False
+        rlist, _, _ = select.select([sys.stdin], [], [], 0)
+        if rlist:
+            try:
+                data = os.read(sys.stdin.fileno(), 1024)
+                return any(c in data for c in (b'\r', b'\n', b' '))
+            except Exception:
+                return False
+        return False
+
 async def stats_listener(stats: ProxyStats):
     print("\033[94m[*]\033[0m Keypress Monitor Active: Press 'Enter' anytime to view Live Usage Stats.")
     while True:
-        if msvcrt.kbhit():
-            key = msvcrt.getch()
-            if key in (b'\r', b'\n', b' '):
-                print(f"\n\033[95m--- [ LIVE STATS SUMMARY ] ---\033[0m")
-                print(f"    Active Connections: {stats.active_conns}")
-                print(f"    Total Upload (TX):  {stats.tx_bytes/1024/1024:.2f} MB")
-                print(f"    Total Download (RX):{stats.rx_bytes/1024/1024:.2f} MB")
-                print(f"\033[95m------------------------------\033[0m\n")
+        if check_keypress():
+            print(f"\n\033[95m--- [ LIVE STATS SUMMARY ] ---\033[0m")
+            print(f"    Active Connections: {stats.active_conns}")
+            print(f"    Total Upload (TX):  {stats.tx_bytes/1024/1024:.2f} MB")
+            print(f"    Total Download (RX):{stats.rx_bytes/1024/1024:.2f} MB")
+            print(f"\033[95m------------------------------\033[0m\n")
         await asyncio.sleep(0.1)
 
 async def start_gateway(args):
@@ -80,8 +100,9 @@ async def start_gateway(args):
         print("\n\033[93m[*]\033[0m Terminating connection streams...")
 
 def main():
-    # Fix console colors to support ANSI
-    os.system('color') 
+    # Fix console colors to support ANSI on Windows
+    if sys.platform == "win32":
+        os.system('color') 
 
     parser = argparse.ArgumentParser(
         description="VeeBridge: A local generic SOCKS5/HTTP multiplexing gateway for VeePN extensions.",

@@ -75,8 +75,8 @@ VeeBridge/
 
 ### ⚙️ Requirements
 - **Python:** Version `3.11` or higher.
-- **Google Chrome:** Installed on Windows default directory.
-- **VeePN Extension:** Logged in and actively connected on Chrome prior to starting.
+- **Google Chrome / Chromium / Brave / Edge:** Installed on Linux, Windows, or macOS.
+- **VeePN Extension:** Logged in and actively connected in the browser prior to starting.
 
 ### 📥 Installation 
 ```bash
@@ -187,8 +187,8 @@ VeeBridge/
 
 ### ⚙️ پیشنیازها
 - زبان **پایتون:** نسخه `3.11` یا جدیدتر.
-- **گوگل کروم:** نصبشده در مسیر پیشفرض ویندوز.
-- **افزونه VeePN:** اکستنشن باید پیشتر در کروم نصب، وارد اکانت شده و **متصل (Connected)** باشد.
+- **مرورگر (Google Chrome / Chromium / Brave / Edge):** بر روی سیستمعامل لینوکس، ویندوز یا مک.
+- **افزونه VeePN:** اکستنشن باید پیشتر در مرورگر نصب، وارد اکانت شده و **متصل (Connected)** باشد.
 
 ### 📥 آموزش نصب 
 <div dir="ltr">

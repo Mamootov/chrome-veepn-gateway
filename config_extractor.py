@@ -5,12 +5,73 @@ import tempfile
 import shutil
 import logging
 
+import sys
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("VeeBridge.Extractor")
 
+VEEPN_EXT_ID = "majdfhpaihoncoakbjgbdhglocklcgno"
+
 def get_chrome_ext_path():
-    path = os.path.expanduser(r'~\AppData\Local\Google\Chrome\User Data\Default\Local Extension Settings\majdfhpaihoncoakbjgbdhglocklcgno')
-    return path
+    home = os.path.expanduser("~")
+    
+    if sys.platform.startswith("linux"):
+        base_dirs = [
+            os.path.join(home, ".config", "google-chrome"),
+            os.path.join(home, ".config", "chromium"),
+            os.path.join(home, ".config", "google-chrome-beta"),
+            os.path.join(home, ".config", "google-chrome-unstable"),
+            os.path.join(home, ".config", "BraveSoftware", "Brave-Browser"),
+            os.path.join(home, ".var", "app", "com.google.Chrome", "config", "google-chrome"),
+            os.path.join(home, ".var", "app", "org.chromium.Chromium", "config", "chromium"),
+            os.path.join(home, "snap", "chromium", "current", ".config", "chromium"),
+            os.path.join(home, "snap", "google-chrome", "current", ".config", "google-chrome"),
+        ]
+        default_fallback = os.path.join(home, ".config", "google-chrome", "Default", "Local Extension Settings", VEEPN_EXT_ID)
+    elif sys.platform == "win32":
+        base_dirs = [
+            os.path.join(home, "AppData", "Local", "Google", "Chrome", "User Data"),
+            os.path.join(home, "AppData", "Local", "Chromium", "User Data"),
+            os.path.join(home, "AppData", "Local", "BraveSoftware", "Brave-Browser", "User Data"),
+            os.path.join(home, "AppData", "Local", "Microsoft", "Edge", "User Data"),
+        ]
+        default_fallback = os.path.join(home, "AppData", "Local", "Google", "Chrome", "User Data", "Default", "Local Extension Settings", VEEPN_EXT_ID)
+    elif sys.platform == "darwin":
+        base_dirs = [
+            os.path.join(home, "Library", "Application Support", "Google", "Chrome"),
+            os.path.join(home, "Library", "Application Support", "Chromium"),
+            os.path.join(home, "Library", "Application Support", "BraveSoftware", "Brave-Browser"),
+            os.path.join(home, "Library", "Application Support", "Microsoft Edge"),
+        ]
+        default_fallback = os.path.join(home, "Library", "Application Support", "Google", "Chrome", "Default", "Local Extension Settings", VEEPN_EXT_ID)
+    else:
+        base_dirs = [
+            os.path.join(home, ".config", "google-chrome"),
+        ]
+        default_fallback = os.path.join(home, ".config", "google-chrome", "Default", "Local Extension Settings", VEEPN_EXT_ID)
+
+    for base_dir in base_dirs:
+        if not os.path.exists(base_dir):
+            continue
+        
+        profiles = ["Default"]
+        try:
+            for entry in os.listdir(base_dir):
+                if entry.startswith("Profile ") and os.path.isdir(os.path.join(base_dir, entry)):
+                    profiles.append(entry)
+        except OSError:
+            pass
+
+        for profile in profiles:
+            ext_path = os.path.join(base_dir, profile, "Local Extension Settings", VEEPN_EXT_ID)
+            if os.path.exists(ext_path):
+                return ext_path
+        
+        direct_path = os.path.join(base_dir, "Local Extension Settings", VEEPN_EXT_ID)
+        if os.path.exists(direct_path):
+            return direct_path
+
+    return default_fallback
 
 def extract_veepn_config():
     """Reads Chrome's LevelDB to extract username, password, and actual proxy nodes."""
